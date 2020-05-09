@@ -1,0 +1,14 @@
+FROM leon/usd-from-gltf
+
+# COPY ./sample-models ./models
+WORKDIR /usr/src/app
+
+COPY requirements.txt ./
+
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+ENTRYPOINT [ "/usr/bin/env" ]
+CMD [ "python", "./main.py" ]

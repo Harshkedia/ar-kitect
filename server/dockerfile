@@ -1,0 +1,10 @@
+FROM leon/usd-from-gltf
+
+RUN apt-get update && apt-get install npm -y && npm install -g obj2gltf
+# RUN npm install -g obj2gltf
+
+COPY ./server ./server
+
+ENTRYPOINT [ "/usr/bin/env" ]
+RUN ["chmod", "+x", "./server"]
+CMD [ "./server" ]

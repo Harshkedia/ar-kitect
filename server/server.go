@@ -4,33 +4,36 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
-type FileSystem struct {
-	fs http.FileSystem
-}
-
 type Message struct {
-	FileName string
-	FileData string
+	FileName     string
+	FileData     string
+	FileMaterial string
 }
 
-func (m Message) writeToFile() (string, error) {
+func expireFiles(fname []string) {
+	time.Sleep(1 * time.Hour)
+	for _, f := range fname {
+		os.Remove("./models/" + f)
+		fmt.Println("deleted" + f)
+	}
+}
 
-	var msg string
-	dec, err := base64.StdEncoding.DecodeString(m.FileData)
+func copyContentsTofile(content string, fname string) (string, error) {
+
+	dec, err := base64.StdEncoding.DecodeString(content)
 	if err != nil {
-		msg = "failed to decode to file"
-		return msg, err
+		return "failed to decode to file", err
 	}
 
-	f, err := os.Create(m.FileName + ".obj")
+	f, err := os.Create(fname)
 	if err != nil {
 		return "error creating file", err
 	}
@@ -41,38 +44,58 @@ func (m Message) writeToFile() (string, error) {
 		return "error writing file", err
 	}
 
-	// go to begginng of file
-	f.Seek(0, 0)
-	// output file contents
-	io.Copy(os.Stdout, f)
+	return fname, nil
+}
 
-	return m.FileName, nil
+func (m Message) writeToFile() (string, error) {
+
+	msg, err := copyContentsTofile(m.FileData, m.FileName+".obj")
+	if err != nil {
+		return "failed to create obj: " + msg, err
+	}
+	if m.FileMaterial != "" {
+
+		msg, err = copyContentsTofile(m.FileMaterial, m.FileName+".mtl")
+		if err != nil {
+			return "failed to create mtl: " + msg, err
+		}
+
+	}
+	return "success", nil
 }
 
 func usdz(w http.ResponseWriter, req *http.Request) {
 	// read json
 	decoder := json.NewDecoder(req.Body)
 	var t Message
-	err := decoder.Decode(&t)
+	var err error
+	err = decoder.Decode(&t)
 	if err != nil {
 		log.Println("error parsing json")
 		fmt.Fprint(w, "error parsing json")
 		return
 	}
 
-	msg, err := t.writeToFile()
+	_, err = t.writeToFile()
 	if err != nil {
-		fmt.Fprint(w, msg)
+		fmt.Fprint(w, "failed to create obj")
 		return
 	}
 
 	// convert to obj
 	commandArgs := []string{"-i", t.FileName + ".obj", "-o", "./models/" + t.FileName + ".gltf"}
 	_, err = exec.Command("obj2gltf", commandArgs...).Output()
+
+	defer os.Remove(t.FileName + ".obj")
+	if t.FileMaterial != "" {
+
+		defer os.Remove(t.FileName + ".mtl")
+	}
+
 	if err != nil {
 		// log.Fatal(err)
+		fmt.Println(err)
 		fmt.Fprint(w, "failed to convert to gltf")
-		fmt.Fprint(w, err)
 		return
 	}
 	fmt.Fprint(w, "convert to gltf successful \n")
@@ -82,13 +105,14 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 	_, err = exec.Command("usd_from_gltf", commandArgs...).Output()
 	if err != nil {
 		// log.Fatal(err)
+		fmt.Println(err)
 		fmt.Fprint(w, "failed to convert to usdz")
-		fmt.Fprint(w, err)
 		return
 	}
 	fmt.Fprint(w, "convert to usdz successful \n")
 
 	fmt.Fprintf(w, t.FileName+".usdz")
+	go expireFiles([]string{t.FileName + ".gltf", t.FileName + ".usdz"})
 }
 
 func headers(w http.ResponseWriter, req *http.Request) {

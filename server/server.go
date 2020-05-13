@@ -44,11 +44,6 @@ func copyContentsTofile(content string, fname string) (string, error) {
 		return "error writing file", err
 	}
 
-	// go to begginng of file
-	// f.Seek(0, 0)
-	// output file contents
-	// io.Copy(os.Stdout, f)
-
 	return fname, nil
 }
 

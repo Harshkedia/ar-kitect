@@ -4,6 +4,11 @@ using Rhino;
 using Rhino.Commands;
 using Rhino.Geometry;
 using Rhino.FileIO;
+using System.Net;
+using System.Collections.Specialized;
+using System.Text;
+using Newtonsoft;
+using Newtonsoft.Json;
 
 namespace ExportAR
 {
@@ -38,11 +43,49 @@ namespace ExportAR
             //Export
             string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AR",
                 "Export");
-            string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AR",
+            string objPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AR",
                 "Export", docName + ".obj");
-            
+            string mtlPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AR",
+                "Export", docName + ".mtl");
+            string encodedPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AR",
+                 "Export", docName + ".txt");
+
             Directory.CreateDirectory(dir);
-            FileObj.Write(path, doc, CreateObjWriteOptions());
+            FileUtilties.DeleteFiles(dir);
+            FileObj.Write(objPath, doc, CreateObjWriteOptions());
+
+            string encodedObj = FileUtilties.EncodeBase64(objPath);
+            string encodedMtl = FileUtilties.EncodeBase64(mtlPath);
+
+            StringBuilder sb = new StringBuilder();
+            StringWriter sw = new StringWriter(sb);
+
+            using (JsonWriter writer = new JsonTextWriter(sw))
+            {
+                writer.Formatting = Formatting.Indented;
+
+                writer.WriteStartObject();
+                writer.WritePropertyName("FileName");
+                writer.WriteValue(docName);
+                writer.WritePropertyName("FileData");
+                writer.WriteValue(encodedObj);
+                writer.WriteEndObject();
+           
+            }
+
+            using (var wb = new WebClient())
+            {
+                var data = new NameValueCollection();
+                data["FileName"] = docName;
+                data["FileData"] = encodedObj;
+
+               string url = "http://ec2-13-233-130-134.ap-south-1.compute.amazonaws.com/";
+               var response = wb.UploadString(url, sw.ToString());
+               string responseInString = response;
+               RhinoApp.WriteLine(responseInString);
+            }
+
+
 
             doc.Objects.UnselectAll();
 
@@ -75,7 +118,8 @@ namespace ExportAR
                 SignificantDigits = 4,
                 ExportGroupNameLayerNames = FileObjWriteOptions.ObjGroupNames.NoGroups,
                 UseRelativeIndexing = false,
-                MeshParameters = MeshingParameters.FastRenderMesh
+                MeshParameters = MeshingParameters.FastRenderMesh,
+                MapZtoY = true
             };
 
             return objWriteOptions;

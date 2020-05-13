@@ -68,16 +68,14 @@ namespace ExportAR
                 writer.WriteValue(docName);
                 writer.WritePropertyName("FileData");
                 writer.WriteValue(encodedObj);
+                writer.WritePropertyName("FileMaterial");
+                writer.WriteValue(encodedMtl);
                 writer.WriteEndObject();
            
             }
 
             using (var wb = new WebClient())
             {
-                var data = new NameValueCollection();
-                data["FileName"] = docName;
-                data["FileData"] = encodedObj;
-
                string url = "http://ec2-13-233-130-134.ap-south-1.compute.amazonaws.com/";
                var response = wb.UploadString(url, sw.ToString());
                string responseInString = response;

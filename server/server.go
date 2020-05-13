@@ -9,12 +9,21 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 type Message struct {
 	FileName     string
 	FileData     string
 	FileMaterial string
+}
+
+func expireFiles(fname []string) {
+	time.Sleep(1 * time.Hour)
+	for _, f := range fname {
+		os.Remove("./models/" + f)
+		fmt.Println("deleted" + f)
+	}
 }
 
 func copyContentsTofile(content string, fname string) (string, error) {
@@ -108,6 +117,7 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprint(w, "convert to usdz successful \n")
 
 	fmt.Fprintf(w, t.FileName+".usdz")
+	go expireFiles([]string{t.FileName + ".gltf", t.FileName + ".usdz"})
 }
 
 func headers(w http.ResponseWriter, req *http.Request) {

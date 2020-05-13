@@ -1,5 +1,19 @@
 FROM leon/usd-from-gltf
 
+<<<<<<< HEAD
+# COPY ./sample-models ./models
+WORKDIR /usr/src/app
+
+COPY requirements.txt ./
+
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+ENTRYPOINT [ "/usr/bin/env" ]
+CMD [ "python", "./main.py" ]
+=======
 RUN apt-get update && apt-get install npm -y && npm install -g obj2gltf
 # RUN npm install -g obj2gltf
 
@@ -8,3 +22,4 @@ COPY ./server ./server
 ENTRYPOINT [ "/usr/bin/env" ]
 RUN ["chmod", "+x", "./server"]
 CMD [ "./server" ]
+>>>>>>> a9cc82fa50715aa310e28bd06e2dcb6e647a8583

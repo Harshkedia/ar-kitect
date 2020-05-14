@@ -81,6 +81,10 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 	var err error
 	t.FileContent = *req
 	t.FileFormat = req.URL.Query().Get("mode")
+	if t.FileFormat == "" {
+		fmt.Fprintf(w, "mode parameter empty")
+		return
+	}
 	log.Println(t.FileFormat)
 	msg, err := t.writeToFile()
 	if err != nil {
@@ -92,6 +96,9 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 	var fname string
 	fname = t.FileNames[0]
 	// fmt.Printf("fname: %s, FileNames %v, length: %d", fname, t.FileNames, len(t.FileNames))
+	for _, fname := range t.FileNames {
+		defer os.Remove(fname)
+	}
 
 	if t.FileFormat == "obj" {
 		if !strings.HasSuffix(fname, ".obj") {
@@ -117,10 +124,9 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 			fmt.Fprint(w, "failed to convert to gltf\n")
 			return
 		}
-	}
-
-	for _, fname := range t.FileNames {
-		defer os.Remove(fname)
+	} else {
+		fmt.Fprintf(w, "invalid mode parameter")
+		return
 	}
 
 	log.Println("convert to glb successful")

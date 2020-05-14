@@ -1,0 +1,1 @@
+docker run --rm -p 8090:8090 --name usd1 usdzserver

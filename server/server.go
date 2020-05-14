@@ -1,9 +1,8 @@
 package main
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -12,10 +11,15 @@ import (
 	"time"
 )
 
-type Message struct {
-	FileName     string
-	FileData     string
-	FileMaterial string
+// const (
+// 	fbx = ".fbx"
+// 	obj = ".obj"
+// )
+
+type message struct {
+	FileFormat  string
+	FileContent http.Request
+	FileNames   []string
 }
 
 func expireFiles(fnames []string) {
@@ -30,82 +34,99 @@ func expireFiles(fnames []string) {
 	}
 }
 
-func copyContentsTofile(content string, fname string) (string, error) {
-
-	dec, err := base64.StdEncoding.DecodeString(content)
+func (m *message) receiveFiles() (string, error) {
+	m.FileNames = []string{}
+	reader, err := m.FileContent.MultipartReader()
 	if err != nil {
-		return "failed to decode to file", err
+		log.Println(err)
+		return "something wrong with multipart", err
 	}
-
-	f, err := os.Create(fname)
-	if err != nil {
-		return "error creating file", err
+	for {
+		part, err := reader.NextPart()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			break
+		}
+		defer part.Close()
+		if part.FileName() == "" {
+			continue
+		}
+		m.FileNames = append(m.FileNames, part.FileName())
+		log.Println("filename: " + part.FileName())
+		d, err := os.Create(part.FileName())
+		if err != nil {
+			// log.Fatal(err)
+			return "failed to write file", err
+		}
+		defer d.Close()
+		io.Copy(d, part)
 	}
-
-	defer f.Close()
-
-	if _, err := f.Write(dec); err != nil {
-		return "error writing file", err
-	}
-
-	return fname, nil
+	return "success", nil
 }
 
-func (m Message) writeToFile() (string, error) {
+func (m *message) writeToFile() (string, error) {
 
-	msg, err := copyContentsTofile(m.FileData, m.FileName+".obj")
+	msg, err := m.receiveFiles()
 	if err != nil {
-		return "failed to create obj: " + msg, err
-	}
-	if m.FileMaterial != "" {
-
-		msg, err = copyContentsTofile(m.FileMaterial, m.FileName+".mtl")
-		if err != nil {
-			return "failed to create mtl: " + msg, err
-		}
-
+		return msg, err
 	}
 	return "success", nil
 }
 
 func usdz(w http.ResponseWriter, req *http.Request) {
 	// read json
-	decoder := json.NewDecoder(req.Body)
-	var t Message
+	// decoder := json.NewDecoder(req.Body)
+	var t message
 	var err error
-	err = decoder.Decode(&t)
+	t.FileContent = *req
+	t.FileFormat = req.URL.Query().Get("mode")
+	log.Println(t.FileFormat)
+	msg, err := t.writeToFile()
 	if err != nil {
-		log.Println("error parsing json")
-		fmt.Fprint(w, "error parsing json")
+		fmt.Fprint(w, "failed to create obj"+msg+"\n")
 		return
 	}
 
-	_, err = t.writeToFile()
-	if err != nil {
-		fmt.Fprint(w, "failed to create obj")
-		return
+	var commandArgs []string
+	var fname string
+	fname = t.FileNames[0]
+	// fmt.Printf("fname: %s, FileNames %v, length: %d", fname, t.FileNames, len(t.FileNames))
+
+	if t.FileFormat == "obj" {
+		if !strings.HasSuffix(fname, ".obj") {
+			fname = t.FileNames[1]
+		}
+		log.Println("converting fileformat obj")
+		commandArgs = []string{"-i", fname, "-o", "./models/" + fname + ".glb"}
+		_, err = exec.Command("obj2gltf", commandArgs...).Output()
+		if err != nil {
+			// log.Fatal(err)
+			fmt.Println(err)
+			fmt.Fprint(w, "failed to convert to gltf\n")
+			return
+		}
+	} else if t.FileFormat == "fbx" {
+
+		log.Println("converting fileformat fbx")
+		commandArgs = []string{"--binary", "-i", fname, "-o", "./models/" + fname + ".glb"}
+		_, err = exec.Command("./FBX2glTF", commandArgs...).Output()
+		if err != nil {
+			// log.Fatal(err)
+			fmt.Println(err)
+			fmt.Fprint(w, "failed to convert to gltf\n")
+			return
+		}
 	}
 
-	// convert to obj
-	commandArgs := []string{"-i", t.FileName + ".obj", "-o", "./models/" + t.FileName + ".gltf"}
-	_, err = exec.Command("obj2gltf", commandArgs...).Output()
-
-	defer os.Remove(t.FileName + ".obj")
-	if t.FileMaterial != "" {
-
-		defer os.Remove(t.FileName + ".mtl")
+	for _, fname := range t.FileNames {
+		defer os.Remove(fname)
 	}
 
-	if err != nil {
-		// log.Fatal(err)
-		fmt.Println(err)
-		fmt.Fprint(w, "failed to convert to gltf")
-		return
-	}
-	fmt.Fprint(w, "convert to gltf successful \n")
+	log.Println("convert to glb successful")
 
 	// convert to usdz
-	commandArgs = []string{"./models/" + t.FileName + ".gltf", "./models/" + t.FileName + ".usdz"}
+	commandArgs = []string{"./models/" + fname + ".glb", "./models/" + fname + ".usdz"}
 	_, err = exec.Command("usd_from_gltf", commandArgs...).Output()
 	if err != nil {
 		// log.Fatal(err)
@@ -113,10 +134,10 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprint(w, "failed to convert to usdz")
 		return
 	}
-	fmt.Fprint(w, "convert to usdz successful \n")
+	log.Println("convert to usdz successful")
 
-	fmt.Fprintf(w, t.FileName+".usdz")
-	// go expireFiles([]string{t.FileName + ".gltf", t.FileName + ".usdz"})
+	fmt.Fprintf(w, fname+".usdz")
+	go expireFiles([]string{fname + ".glb", fname + ".usdz"})
 }
 
 func headers(w http.ResponseWriter, req *http.Request) {

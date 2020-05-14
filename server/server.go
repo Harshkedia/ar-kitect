@@ -41,6 +41,7 @@ func (m *message) receiveFiles() (string, error) {
 		log.Println(err)
 		return "something wrong with multipart", err
 	}
+
 	for {
 		part, err := reader.NextPart()
 		if err == io.EOF {
@@ -81,15 +82,22 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 	var err error
 	t.FileContent = *req
 	t.FileFormat = req.URL.Query().Get("mode")
-	if t.FileFormat == "" {
-		fmt.Fprintf(w, "mode parameter empty")
-		return
+	if t.FileFormat != "obj" {
+		if t.FileFormat != "fbx" {
+			fmt.Fprintf(w, "mode parameter invalid")
+			return
+		}
 	}
-	log.Println(t.FileFormat)
+
 	msg, err := t.writeToFile()
 	if err != nil {
 		fmt.Fprint(w, "failed to create obj"+msg+"\n")
 		return
+	} else {
+		if len(t.FileNames) == 0 {
+			fmt.Fprint(w, "missing attachments \n")
+			return
+		}
 	}
 
 	var commandArgs []string
@@ -124,9 +132,6 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 			fmt.Fprint(w, "failed to convert to gltf\n")
 			return
 		}
-	} else {
-		fmt.Fprintf(w, "invalid mode parameter")
-		return
 	}
 
 	log.Println("convert to glb successful")

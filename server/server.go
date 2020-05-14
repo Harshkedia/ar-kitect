@@ -18,11 +18,15 @@ type Message struct {
 	FileMaterial string
 }
 
-func expireFiles(fname []string) {
+func expireFiles(fnames []string) {
 	time.Sleep(1 * time.Hour)
-	for _, f := range fname {
-		os.Remove("./models/" + f)
-		fmt.Println("deleted" + f)
+	var fname string
+	for _, f := range fnames {
+		fname = "./models/" + f
+		if _, err := os.Stat(fname); err != nil {
+			os.Remove(fname)
+			fmt.Println(fname)
+		}
 	}
 }
 
@@ -112,7 +116,7 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprint(w, "convert to usdz successful \n")
 
 	fmt.Fprintf(w, t.FileName+".usdz")
-	go expireFiles([]string{t.FileName + ".gltf", t.FileName + ".usdz"})
+	// go expireFiles([]string{t.FileName + ".gltf", t.FileName + ".usdz"})
 }
 
 func headers(w http.ResponseWriter, req *http.Request) {

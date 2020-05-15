@@ -2,14 +2,14 @@
   <div class="home">
     <model-viewer
       class="model"
-      :src="url"
+      src="https://srv-file7.gofile.io/download/CE9GDK/Intermediate.obj.glb"
       ar
       ar-modes="webxr scene-viewer quick-look fallback"
       ar-scale="auto"
       magic-leap
       camera-controls
       alt="A 3D model of an astronaut"
-      :ios-src="urlIos"
+      ios-src="https://srv-file7.gofile.io/download/CE9GDK/Intermediate.obj.usdz"
     />
   </div>
 </template>

@@ -76,14 +76,18 @@ func (m *message) writeToFile() (string, error) {
 }
 
 func usdz(w http.ResponseWriter, req *http.Request) {
-	// read json
-	// decoder := json.NewDecoder(req.Body)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT")
+	if req.Method == "OPTIONS" {
+		return
+	}
 	var t message
 	var err error
 	t.FileContent = *req
 	t.FileFormat = req.URL.Query().Get("mode")
 	if t.FileFormat != "obj" {
 		if t.FileFormat != "fbx" {
+			log.Println("mode parameter invalid")
 			fmt.Fprintf(w, "mode parameter invalid")
 			return
 		}
@@ -91,19 +95,21 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 
 	msg, err := t.writeToFile()
 	if err != nil {
-		fmt.Fprint(w, "failed to create obj"+msg+"\n")
+		log.Println("failed to create obj")
+		fmt.Fprintln(w, "failed to create obj :"+msg)
 		return
-	} else {
-		if len(t.FileNames) == 0 {
-			fmt.Fprint(w, "missing attachments \n")
-			return
-		}
+	}
+
+	if len(t.FileNames) == 0 {
+		log.Println("missing attachments")
+		fmt.Fprintln(w, "missing attachments")
+		return
 	}
 
 	var commandArgs []string
 	var fname string
 	fname = t.FileNames[0]
-	// fmt.Printf("fname: %s, FileNames %v, length: %d", fname, t.FileNames, len(t.FileNames))
+	// fmt.Printf("fname: %s, FileNames : %v, length: %d", fname, t.FileNames, len(t.FileNames))
 	for _, fname := range t.FileNames {
 		defer os.Remove(fname)
 	}
@@ -117,8 +123,8 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 		_, err = exec.Command("obj2gltf", commandArgs...).Output()
 		if err != nil {
 			// log.Fatal(err)
-			fmt.Println(err)
-			fmt.Fprint(w, "failed to convert to gltf\n")
+			log.Println(err)
+			fmt.Fprintln(w, "failed to convert to glb")
 			return
 		}
 	} else if t.FileFormat == "fbx" {
@@ -128,8 +134,8 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 		_, err = exec.Command("./FBX2glTF", commandArgs...).Output()
 		if err != nil {
 			// log.Fatal(err)
-			fmt.Println(err)
-			fmt.Fprint(w, "failed to convert to gltf\n")
+			log.Println(err)
+			fmt.Fprintln(w, "failed to convert to glb")
 			return
 		}
 	}
@@ -141,13 +147,13 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 	_, err = exec.Command("usd_from_gltf", commandArgs...).Output()
 	if err != nil {
 		// log.Fatal(err)
-		fmt.Println(err)
+		log.Println(err)
 		fmt.Fprint(w, "failed to convert to usdz")
 		return
 	}
 	log.Println("convert to usdz successful")
 
-	fmt.Fprintf(w, fname+".usdz")
+	fmt.Fprintln(w, fname+".usdz")
 	go expireFiles([]string{fname + ".glb", fname + ".usdz"})
 }
 
@@ -166,4 +172,8 @@ func main() {
 	http.HandleFunc("/headers", headers)
 	http.Handle("/models/", http.StripPrefix(strings.TrimRight("/models/", "/"), http.FileServer(http.Dir("models"))))
 	http.ListenAndServe(":8090", nil)
+	err := http.ListenAndServeTLS(":443", "server.crt", "server.key", nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
 }

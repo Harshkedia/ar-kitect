@@ -176,8 +176,8 @@ func headers(w http.ResponseWriter, req *http.Request) {
 func main() {
 	certManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist("ec2-13-233-130-134.ap-south-1.compute.amazonaws.com/"), //Your domain here
-		Cache:      autocert.DirCache("certs"),                                                     //Folder for storing certificates
+		HostPolicy: autocert.HostWhitelist("ec2-13-233-130-134.ap-south-1.compute.amazonaws.com"), //Your domain here
+		Cache:      autocert.DirCache("certs"),                                                    //Folder for storing certificates
 	}
 
 	server := &http.Server{

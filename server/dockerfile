@@ -4,7 +4,8 @@ RUN apt-get update && apt-get install npm -y && npm install -g obj2gltf
 # RUN npm install -g obj2gltf
 COPY ./server ./server
 COPY ./FBX2glTF .
-
+COPY ./server.crt .
+COPY ./server.key .
 ENTRYPOINT [ "/usr/bin/env" ]
 RUN ["chmod", "+x", "./server"]
 RUN ["chmod", "+x", "./FBX2glTF"]

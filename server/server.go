@@ -11,15 +11,24 @@ import (
 	"time"
 )
 
-// const (
-// 	fbx = ".fbx"
-// 	obj = ".obj"
-// )
-
 type message struct {
 	FileFormat  string
 	FileContent http.Request
 	FileNames   []string
+}
+
+type middleware struct {
+	handler http.Handler
+}
+
+func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT")
+	m.handler.ServeHTTP(w, r)
+}
+
+func newMiddleware(h http.Handler) *middleware {
+	return &middleware{h}
 }
 
 func expireFiles(fnames []string) {
@@ -76,11 +85,6 @@ func (m *message) writeToFile() (string, error) {
 }
 
 func usdz(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT")
-	if req.Method == "OPTIONS" {
-		return
-	}
 	var t message
 	var err error
 	t.FileContent = *req
@@ -167,12 +171,13 @@ func headers(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-
-	http.HandleFunc("/", usdz)
-	http.HandleFunc("/headers", headers)
-	http.Handle("/models/", http.StripPrefix(strings.TrimRight("/models/", "/"), http.FileServer(http.Dir("models"))))
-	http.ListenAndServe(":8090", nil)
-	err := http.ListenAndServeTLS(":443", "server.crt", "server.key", nil)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", usdz)
+	mux.HandleFunc("/headers", headers)
+	mux.Handle("/models/", http.StripPrefix(strings.TrimRight("/models/", "/"), http.FileServer(http.Dir("models"))))
+	mainMux := newMiddleware(mux)
+	http.ListenAndServe(":8090", mainMux)
+	err := http.ListenAndServeTLS(":443", "server.crt", "server.key", mainMux)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

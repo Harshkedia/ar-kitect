@@ -1,3 +1,5 @@
 *.ppk
 *.pem
 *.env
+*.crt
+*.key

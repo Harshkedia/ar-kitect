@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -9,6 +10,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/acme/autocert"
 )
 
 type message struct {
@@ -171,13 +174,26 @@ func headers(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist("amazonaws.com"), //Your domain here
+		Cache:      autocert.DirCache("certs"),              //Folder for storing certificates
+	}
+
+	server := &http.Server{
+		Addr: ":https",
+		TLSConfig: &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		},
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", usdz)
 	mux.HandleFunc("/headers", headers)
 	mux.Handle("/models/", http.StripPrefix(strings.TrimRight("/models/", "/"), http.FileServer(http.Dir("models"))))
 	mainMux := newMiddleware(mux)
-	http.ListenAndServe(":8090", mainMux)
-	err := http.ListenAndServeTLS(":443", "server.crt", "server.key", mainMux)
+	go http.ListenAndServe(":http", certManager.HTTPHandler(mainMux))
+	err := server.ListenAndServeTLS("", "")
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

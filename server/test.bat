@@ -1,1 +1,1 @@
-docker run --rm -p 8090:8090 --name usd1 usdzserver
+docker run -d --rm --mount type=bind,source=%GITHUB%/ar-kitect/server/sample-models,target=/usr/app/models -p 80:80 -p 443:443 --name usd1 usdzserver

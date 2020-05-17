@@ -180,19 +180,19 @@ func main() {
 		Cache:      autocert.DirCache("certs"),             //Folder for storing certificates
 	}
 
-	server := &http.Server{
-		Addr: ":https",
-		TLSConfig: &tls.Config{
-			GetCertificate: certManager.GetCertificate,
-		},
-	}
-
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", usdz)
 	mux.HandleFunc("/headers", headers)
 	mux.Handle("/models/", http.StripPrefix(strings.TrimRight("/models/", "/"), http.FileServer(http.Dir("models"))))
 	mainMux := newMiddleware(mux)
-	go http.ListenAndServe(":http", certManager.HTTPHandler(mainMux))
+	server := &http.Server{
+		Addr: ":https",
+		TLSConfig: &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		},
+		Handler: mainMux,
+	}
+	go http.ListenAndServe(":http", certManager.HTTPHandler(nil))
 	err := server.ListenAndServeTLS("", "")
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

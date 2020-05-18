@@ -8,13 +8,19 @@
 </template>
 
 <style>
+body,
+html {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  min-height: 100vh;
+}
 #app {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
   box-sizing: border-box;
-  width: 1200px;
   margin: 0 auto;
 }
 

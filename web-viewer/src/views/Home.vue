@@ -10,6 +10,9 @@
       camera-controls
       alt="A 3D model of an astronaut"
       :ios-src="urlIos"
+      loading="eager"
+      shadow-intensity="10"
+      shadow-softness="1"
     />
   </div>
 </template>
@@ -39,8 +42,8 @@ export default {
   text-align: center;
   color: #2c3e50;
   box-sizing: border-box;
-  height: 500px;
   width: 50%;
+  height: 500px;
   margin: 0 auto;
 }
 </style>

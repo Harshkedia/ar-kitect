@@ -13,7 +13,14 @@
       loading="eager"
       shadow-intensity="10"
       shadow-softness="1"
-    />
+    >
+      <button
+        slot="ar-button"
+        style="background-color: white; border-radius: 4px; border: none; position: absolute; top: 16px; right: 16px; "
+      >
+        👋 Activate AR
+      </button>
+    </model-viewer>
   </div>
 </template>
 

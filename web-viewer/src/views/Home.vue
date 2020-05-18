@@ -2,14 +2,14 @@
   <div class="home">
     <model-viewer
       class="model"
-      src="https://srv-file7.gofile.io/download/CE9GDK/Intermediate.obj.glb"
+      :src="url"
       ar
       ar-modes="webxr scene-viewer quick-look fallback"
       ar-scale="auto"
       magic-leap
       camera-controls
       alt="A 3D model of an astronaut"
-      ios-src="https://srv-file7.gofile.io/download/CE9GDK/Intermediate.obj.usdz"
+      :ios-src="urlIos"
     />
   </div>
 </template>
@@ -23,10 +23,10 @@ export default {
   components: {},
   computed: {
     url() {
-      return `http://ec2-13-233-130-134.ap-south-1.compute.amazonaws.com/models/${this.$route.query.name}.glb`;
+      return `https://ar.portfo.io/models/${this.$route.query.name}.glb`;
     },
     urlIos() {
-      return `http://ec2-13-233-130-134.ap-south-1.compute.amazonaws.com/models/${this.$route.query.name}.usdz`;
+      return `https://ar.portfo.io/models/${this.$route.query.name}.usdz`;
     }
   }
 };
@@ -39,8 +39,8 @@ export default {
   text-align: center;
   color: #2c3e50;
   box-sizing: border-box;
-  height: 800px;
-  width: 800px;
+  height: 500px;
+  width: 50%;
   margin: 0 auto;
 }
 </style>

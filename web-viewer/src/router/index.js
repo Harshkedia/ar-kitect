@@ -8,7 +8,8 @@ const routes = [
   {
     path: "/",
     name: "home",
-    component: Home
+    component: Home,
+    meta: { auth: true, title: "AR Viewer" }
   },
   {
     path: "/about",

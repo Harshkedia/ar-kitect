@@ -13,6 +13,7 @@
       loading="eager"
       shadow-intensity="10"
       shadow-softness="1"
+      :poster="require(`../assets/loading.gif`)"
     >
       <button
         slot="ar-button"

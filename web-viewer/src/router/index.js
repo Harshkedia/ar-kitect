@@ -9,7 +9,7 @@ const routes = [
     path: "/",
     name: "home",
     component: Home,
-    meta: { auth: true, title: "AR Viewer" }
+    meta: { title: "AR Viewer" }
   },
   {
     path: "/about",
@@ -17,14 +17,16 @@ const routes = [
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () => import("../views/About.vue")
+    component: () => import("../views/About.vue"),
+    meta: { title: "AR Viewer" }
   }
 ];
 
 const router = new VueRouter({
   mode: "history",
   base: process.env.BASE_URL,
-  routes
+  routes,
+  meta: { title: "AR Viewer" }
 });
 
 export default router;

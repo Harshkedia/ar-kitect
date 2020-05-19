@@ -77,9 +77,9 @@ export default {
   margin-left: 5%;
   width: 90%;
   height: 75%;
-  border-style: solid;
+  /* border-style: solid;
   border-width: 5px;
-  border-radius: 30px;
+  border-radius: 30px; */
   border-color: rgb(51, 51, 138);
   background-color: rgb(163, 163, 228);
 }
@@ -143,7 +143,7 @@ export default {
 
 .back-button {
   position: absolute;
-  top: 87%;
+  top: 90%;
   bottom: 0;
   left: 0;
   right: 0;

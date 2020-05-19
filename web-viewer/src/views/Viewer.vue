@@ -88,7 +88,6 @@ export default {
   background-color: rgb(51, 51, 138);
   height: 50px;
   width: 100px;
-  border-radius: 10px;
   color: white;
   font-size: 15px;
   position: absolute;

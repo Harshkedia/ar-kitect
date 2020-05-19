@@ -50,13 +50,12 @@ html {
   color: black;
   text-decoration: none;
   margin: 20px;
-  background-color: rgb(51, 51, 138);
   padding: 10px;
-  color: white;
+  color: black;
 }
 
 #nav a.router-link-exact-active {
-  color: rgb(253, 158, 174);
+  color: rgb(51, 51, 138);
 }
 
 .fade-enter-active,

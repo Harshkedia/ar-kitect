@@ -8,6 +8,8 @@ using System.Net;
 using System.Collections.Specialized;
 using System.Text;
 using Newtonsoft.Json;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace ExportAR
 {
@@ -52,37 +54,16 @@ namespace ExportAR
             Directory.CreateDirectory(dir);
             FileUtilties.DeleteFiles(dir);
             FileObj.Write(objPath, doc, CreateObjWriteOptions());
+            FileUtilties.ModifyMtl(mtlPath);
+
+            byte[] objFile = File.ReadAllBytes(objPath);
+            byte[] mtlFile = File.ReadAllBytes(mtlPath);
 
             string encodedObj = FileUtilties.EncodeBase64(objPath);
             string encodedMtl = FileUtilties.EncodeBase64(mtlPath);
 
-            StringBuilder sb = new StringBuilder();
-            StringWriter sw = new StringWriter(sb);
 
-            using (JsonWriter writer = new JsonTextWriter(sw))
-            {
-                writer.Formatting = Formatting.Indented;
-
-                writer.WriteStartObject();
-                writer.WritePropertyName("FileName");
-                writer.WriteValue(docName);
-                writer.WritePropertyName("FileData");
-                writer.WriteValue(encodedObj);
-                writer.WritePropertyName("FileMaterial");
-                writer.WriteValue(encodedMtl);
-                writer.WriteEndObject();
-           
-            }
-
-            using (var wb = new WebClient())
-            {
-               string url = "http://ec2-13-233-130-134.ap-south-1.compute.amazonaws.com/";
-               var response = wb.UploadString(url, sw.ToString());
-               string responseInString = response;
-               RhinoApp.WriteLine(responseInString);
-            }
-
-
+            UploadToServer(objFile, mtlFile, docName);
 
             doc.Objects.UnselectAll();
 
@@ -120,6 +101,24 @@ namespace ExportAR
             };
 
             return objWriteOptions;
+        }
+
+        private async Task<string> UploadToServer(byte[] objFile, byte[] mtlFile, String docName)
+        {
+            HttpClient httpClient = new HttpClient();
+            MultipartFormDataContent form = new MultipartFormDataContent();
+            form.Add(new ByteArrayContent(objFile, 0, objFile.Length), "doc.obj", docName + ".obj");
+            form.Add(new ByteArrayContent(mtlFile, 0, mtlFile.Length), "doc.mtl", docName + ".mtl");
+
+            string url = "https://ar.portfo.io/?mode=obj";
+
+            HttpResponseMessage response = await httpClient.PostAsync(url, form);
+
+            response.EnsureSuccessStatusCode();
+            httpClient.Dispose();
+            string sd = response.Content.ReadAsStringAsync().Result;
+            RhinoApp.WriteLine(sd);
+            return sd;
         }
     }
 }

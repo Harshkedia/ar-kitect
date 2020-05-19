@@ -39,6 +39,7 @@ html {
   color: #2c3e50;
   box-sizing: border-box;
   margin: 0 auto;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 #nav {

@@ -34,7 +34,7 @@ export default {
   components: {},
   computed: {
     url() {
-      return `https://ar.portfo.io/models/${this.$route.query.name}.glb`;
+      return `https://ar.portfo.io/models/${this.$route.query.name}.gltf`;
     },
     urlIos() {
       return `https://ar.portfo.io/models/${this.$route.query.name}.usdz`;

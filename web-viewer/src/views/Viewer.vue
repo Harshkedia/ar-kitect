@@ -1,7 +1,17 @@
 <template>
   <div class="home">
-    <h1>AR Viewer</h1>
+    <div class="input">
+      <input
+        v-if="!textFilled"
+        v-model="modelName"
+        class="input-text"
+        type="text"
+        placeholder="  Please type model name"
+      >
+      <button v-if="!textFilled" class="input-button" @click="load">Load Model</button>
+    </div>
     <model-viewer
+      v-if="textFilled"
       class="model"
       :src="url"
       ar
@@ -15,6 +25,7 @@
       shadow-intensity="10"
       shadow-softness="1"
       :poster="require(`../assets/loading.gif`)"
+      quick-look-browsers="safari chrome"
     >
       <button slot="ar-button" class="activate-ar">
         Activate AR
@@ -30,12 +41,23 @@ import "@google/model-viewer";
 export default {
   name: "Home",
   components: {},
+  data() {
+    return {
+      textFilled: false,
+      modelName: ""
+    };
+  },
   computed: {
     url() {
-      return `https://ar.portfo.io/models/${this.$route.query.name}.glb`;
+      return `https://ar.portfo.io/models/${this.modelName}.glb`;
     },
     urlIos() {
-      return `https://ar.portfo.io/models/${this.$route.query.name}.usdz`;
+      return `https://ar.portfo.io/models/${this.modelName}.usdz`;
+    }
+  },
+  methods: {
+    load() {
+      this.textFilled = true;
     }
   }
 };
@@ -62,12 +84,43 @@ export default {
 
 .activate-ar {
   background-color: rgb(51, 51, 138);
-  position: relative;
   height: 50px;
   width: 100px;
-  margin-top: 50%;
   border-radius: 10px;
   color: white;
   font-size: 15px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+}
+
+.input {
+  width: 200px;
+  height: 40px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+}
+
+.input-text {
+  width: 200px;
+  height: 20px;
+  font-size: 15px;
+  background-color: rgb(51, 51, 138);
+  color: white;
+  border-radius: 10px;
+}
+
+.input-button {
+  width: 100px;
+  height: 20px;
+  font-size: 15px;
+  margin: auto;
 }
 </style>

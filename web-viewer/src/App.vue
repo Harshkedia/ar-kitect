@@ -1,6 +1,9 @@
 <template>
   <div id="app">
-    <div id="nav" />
+    <div id="nav">
+      <router-link to="/">AR Viewer</router-link>
+      <router-link to="/upload">AR Uploader</router-link>
+    </div>
     <transition name="fade">
       <router-view />
     </transition>
@@ -24,13 +27,21 @@ html {
   margin: 0 auto;
 }
 
+#nav {
+  padding: 30px;
+}
 #nav a {
   font-weight: bold;
-  color: #2c3e50;
+  color: white;
+  text-decoration: none;
+  margin: 20px;
+  background-color: rgb(51, 51, 138);
+  padding: 10px;
+  border-radius: 5px;
 }
 
 #nav a.router-link-exact-active {
-  color: #42b983;
+  color: rgb(253, 158, 174);
 }
 
 .fade-enter-active,

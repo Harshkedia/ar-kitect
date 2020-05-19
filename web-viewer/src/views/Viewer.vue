@@ -6,7 +6,8 @@
         v-model="modelName"
         class="input-text"
         type="text"
-        placeholder="  Please type model name"
+        placeholder="
+      Input Model Name"
       >
       <button v-if="!textFilled" class="input-button" @click="load">Load Model</button>
     </div>
@@ -31,6 +32,7 @@
         Activate AR
       </button>
     </model-viewer>
+    <button v-if="textFilled" class="back-button" @click="load">Back</button>
   </div>
 </template>
 
@@ -57,7 +59,7 @@ export default {
   },
   methods: {
     load() {
-      this.textFilled = true;
+      this.textFilled = !this.textFilled;
     }
   }
 };
@@ -74,7 +76,7 @@ export default {
   position: absolute;
   margin-left: 5%;
   width: 90%;
-  height: 85%;
+  height: 75%;
   border-style: solid;
   border-width: 5px;
   border-radius: 30px;
@@ -101,7 +103,7 @@ export default {
   width: 200px;
   height: 40px;
   position: absolute;
-  top: 0;
+  top: -5%;
   bottom: 0;
   left: 0;
   right: 0;
@@ -110,17 +112,53 @@ export default {
 
 .input-text {
   width: 200px;
-  height: 20px;
+  height: 30px;
   font-size: 15px;
   background-color: rgb(51, 51, 138);
   color: white;
-  border-radius: 10px;
+  padding: 5px;
+  border-style: hidden;
+  font-weight: bold;
+  text-align: center;
 }
 
+::placeholder {
+  color: rgb(104, 104, 175);
+  opacity: 1; /* Firefox */
+}
 .input-button {
   width: 100px;
   height: 20px;
-  font-size: 15px;
   margin: auto;
+  margin-top: 10px;
+  border-radius: 0px;
+  background-color: rgb(51, 51, 138);
+  border: none;
+  color: white;
+  text-align: center;
+  font-size: 12px;
+  padding-top: 5px;
+  padding-bottom: 20px;
+}
+
+.back-button {
+  position: absolute;
+  top: 87%;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  width: 100px;
+  height: 20px;
+  margin: auto;
+  margin-top: 10px;
+  border-radius: 0px;
+  background-color: rgb(51, 51, 138);
+  border: none;
+  color: white;
+  text-align: center;
+  font-size: 12px;
+  padding-top: 5px;
+  padding-bottom: 20px;
 }
 </style>

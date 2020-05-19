@@ -2,7 +2,7 @@
   <div id="app">
     <div id="nav">
       <router-link to="/">AR Viewer</router-link>
-      <router-link to="/upload">AR Uploader</router-link>
+      <router-link v-if="isMobile" to="/upload">AR Uploader</router-link>
     </div>
     <transition name="fade">
       <router-view />
@@ -10,6 +10,20 @@
   </div>
 </template>
 
+<script>
+export default {
+  computed: {
+    isMobile() {
+      if (
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      ) {
+        return false;
+      }
+      return true;
+    }
+  }
+};
+</script>
 <style>
 body,
 html {
@@ -32,12 +46,12 @@ html {
 }
 #nav a {
   font-weight: bold;
-  color: white;
+  color: black;
   text-decoration: none;
   margin: 20px;
   background-color: rgb(51, 51, 138);
   padding: 10px;
-  border-radius: 5px;
+  color: white;
 }
 
 #nav a.router-link-exact-active {

@@ -39,7 +39,7 @@ export default {
       this.$refs.fileform.addEventListener("drop", e => {
         e.dataTransfer.files.forEach(file => this.files.push(file));
         this.$refs.fileform.style.backgroundColor = "rgb(51, 51, 138)";
-        this.$refs.formtext.innerHTML = `${this.files.length} Files Uploaded`;
+        this.$refs.formtext.innerHTML = `${this.files.length} File(s) Added`;
       });
     }
   },
@@ -69,7 +69,6 @@ form {
   margin-top: 40px;
   text-align: center;
   line-height: 400px;
-  border-radius: 20px;
   color: white;
 }
 
@@ -82,5 +81,13 @@ div.file-listing {
 
 .upload-button {
   margin-top: 10px;
+  border-radius: 0px;
+  background-color: rgb(51, 51, 138);
+  border: none;
+  color: white;
+  text-align: center;
+  font-size: 12px;
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 </style>

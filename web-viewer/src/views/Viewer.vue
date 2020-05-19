@@ -23,8 +23,6 @@
       alt="A 3D model of an astronaut"
       :ios-src="urlIos"
       loading="eager"
-      shadow-intensity="10"
-      shadow-softness="1"
       :poster="require(`../assets/loading.gif`)"
       quick-look-browsers="safari chrome"
     >

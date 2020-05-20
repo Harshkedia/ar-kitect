@@ -3,6 +3,8 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+
+	// "haikunator"
 	"io"
 	"log"
 	"net/http"
@@ -66,6 +68,7 @@ func (m *message) receiveFiles() (string, error) {
 			continue
 		}
 		m.FileNames = append(m.FileNames, part.FileName())
+		// s := haikunator.Haikunate()
 		log.Println("filename: " + part.FileName())
 		d, err := os.Create(part.FileName())
 		if err != nil {
@@ -126,7 +129,7 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 			fname = t.FileNames[1]
 		}
 		log.Println("converting fileformat obj")
-		commandArgs = []string{"-i", fname, "-o", "./models/" + fname + ".glb"}
+		commandArgs = []string{"--binary", "-i", fname, "-o", "./models/" + fname + ".glb"}
 		_, err = exec.Command("obj2gltf", commandArgs...).Output()
 		if err != nil {
 			// log.Fatal(err)

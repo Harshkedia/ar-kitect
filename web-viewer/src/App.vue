@@ -24,14 +24,16 @@ export default {
   }
 };
 </script>
-<style>
+<style lang="scss">
 body,
 html {
   padding: 0;
   margin: 0;
   width: 100%;
   min-height: 100vh;
+  background-color: $navy;
 }
+
 #app {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -45,17 +47,17 @@ html {
 #nav {
   padding: 30px;
 }
+
 #nav a {
   font-weight: bold;
-  color: black;
+  color: $light-gray;
   text-decoration: none;
   margin: 20px;
   padding: 10px;
-  color: black;
 }
 
 #nav a.router-link-exact-active {
-  color: rgb(51, 51, 138);
+  color: white;
 }
 
 .fade-enter-active,

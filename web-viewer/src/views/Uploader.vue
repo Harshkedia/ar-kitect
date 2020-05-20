@@ -2,7 +2,7 @@
 <template>
   <div id="file-drag-drop">
     <form ref="fileform">
-      <span ref="formtext" class="drop-files">Drop your model here</span>
+      <span ref="formtext" class="drop-files">Drop Model Here</span>
     </form>
     <button class="upload-button" @click="upload">Upload File</button>
   </div>
@@ -29,7 +29,7 @@ export default {
             e => {
               e.preventDefault();
               e.stopPropagation();
-              this.$refs.fileform.style.backgroundColor = "grey";
+              this.$refs.fileform.style.backgroundColor = "#a3a9ac";
             },
             false
           );
@@ -38,7 +38,7 @@ export default {
 
       this.$refs.fileform.addEventListener("drop", e => {
         e.dataTransfer.files.forEach(file => this.files.push(file));
-        this.$refs.fileform.style.backgroundColor = "rgb(51, 51, 138)";
+        this.$refs.fileform.style.backgroundColor = "#545759";
         this.$refs.formtext.innerHTML = `${this.files.length} File(s) Added`;
       });
     }
@@ -59,12 +59,12 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 form {
   display: block;
   height: 400px;
   width: 400px;
-  background: rgb(51, 51, 138);
+  background: $dark-gray;
   margin: auto;
   margin-top: 40px;
   text-align: center;
@@ -82,12 +82,13 @@ div.file-listing {
 .upload-button {
   margin-top: 10px;
   border-radius: 0px;
-  background-color: rgb(51, 51, 138);
+  background-color: $light-gray;
   border: none;
-  color: white;
+  color: black;
   text-align: center;
   font-size: 12px;
-  padding-top: 5px;
-  padding-bottom: 5px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding: 10px;
 }
 </style>

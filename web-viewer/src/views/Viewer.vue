@@ -1,15 +1,10 @@
 <template>
-  <div class="home">
+  <div id="home">
     <div class="input">
-      <input
-        v-if="!textFilled"
-        v-model="modelName"
-        class="input-text"
-        type="text"
-        placeholder="
-      Input Model Name"
-      >
-      <button v-if="!textFilled" class="input-button" @click="load">Load Model</button>
+      <p class="input-label">Search For Your Model</p>
+      <input v-if="!textFilled" v-model="modelName" class="input-text" type="text" >
+      <br />
+      <button v-if="!textFilled" class="input-button" @click="load">Load</button>
     </div>
     <model-viewer
       v-if="textFilled"
@@ -63,7 +58,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .model {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -75,15 +70,11 @@ export default {
   margin-left: 5%;
   width: 90%;
   height: 75%;
-  /* border-style: solid;
-  border-width: 5px;
-  border-radius: 30px; */
-  border-color: rgb(51, 51, 138);
-  background-color: rgb(163, 163, 228);
+  background-color: $navy;
 }
 
 .activate-ar {
-  background-color: rgb(51, 51, 138);
+  background-color: $navy;
   height: 50px;
   width: 100px;
   color: white;
@@ -97,21 +88,27 @@ export default {
 }
 
 .input {
-  width: 200px;
+  width: 80%;
   height: 40px;
   position: absolute;
-  top: -5%;
+  top: -40%;
   bottom: 0;
   left: 0;
   right: 0;
   margin: auto;
 }
 
+.input-label {
+  color: white;
+  font-weight: bolder;
+  font-size: 4vh;
+}
+
 .input-text {
-  width: 200px;
-  height: 30px;
-  font-size: 15px;
-  background-color: rgb(51, 51, 138);
+  width: 50%;
+  height: 5vh;
+  font-size: 80%;
+  background-color: $dark-gray;
   color: white;
   padding: 5px;
   border-style: hidden;
@@ -120,18 +117,18 @@ export default {
 }
 
 ::placeholder {
-  color: rgb(104, 104, 175);
-  opacity: 1; /* Firefox */
+  color: $dark-gray;
 }
+
 .input-button {
   width: 100px;
   height: 20px;
   margin: auto;
-  margin-top: 10px;
+  margin-top: 4vh;
   border-radius: 0px;
-  background-color: rgb(51, 51, 138);
+  background-color: $light-gray;
   border: none;
-  color: white;
+  color: black;
   text-align: center;
   font-size: 12px;
   padding-top: 5px;
@@ -150,9 +147,9 @@ export default {
   margin: auto;
   margin-top: 10px;
   border-radius: 0px;
-  background-color: rgb(51, 51, 138);
+  background-color: $light-gray;
   border: none;
-  color: white;
+  color: black;
   text-align: center;
   font-size: 12px;
   padding-top: 5px;

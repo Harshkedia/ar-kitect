@@ -15,7 +15,7 @@
       ar-scale="auto"
       magic-leap
       camera-controls
-      alt="A 3D model of an astronaut"
+      alt="A 3D Model"
       :ios-src="urlIos"
       loading="eager"
       :poster="require(`../assets/loading.gif`)"
@@ -44,7 +44,7 @@ export default {
   },
   computed: {
     url() {
-      return `https://ar.portfo.io/models/${this.modelName}.glb`;
+      return `https://ar.portfo.io/models/${this.modelName}.gltf`;
     },
     urlIos() {
       return `https://ar.portfo.io/models/${this.modelName}.usdz`;

@@ -3,7 +3,7 @@
     <div class="input">
       <p class="input-label">Search For Your Model</p>
       <input v-if="!textFilled" v-model="modelName" class="input-text" type="text" >
-      <br />
+      <br >
       <button v-if="!textFilled" class="input-button" @click="load">Load</button>
     </div>
     <model-viewer
@@ -20,6 +20,7 @@
       loading="eager"
       :poster="require(`../assets/loading.gif`)"
       quick-look-browsers="safari chrome"
+      exposure="0.1"
     >
       <button slot="ar-button" class="activate-ar">
         Activate AR
@@ -70,7 +71,7 @@ export default {
   margin-left: 5%;
   width: 90%;
   height: 75%;
-  background-color: $navy;
+  background-color: white;
 }
 
 .activate-ar {

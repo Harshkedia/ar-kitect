@@ -1,8 +1,15 @@
 <template>
   <div id="home">
     <div class="input">
-      <p class="input-label">Search For Your Model</p>
-      <input v-if="!textFilled" v-model="modelName" class="input-text" type="text" >
+      <input
+        v-if="!textFilled"
+        v-model="modelName"
+        class="input-text"
+        type="text"
+        placeholder="Search For Your Model"
+        onfocus="this.placeholder = ''"
+        onblur="this.placeholder = 'Search For Your Model'"
+      >
       <br >
       <button v-if="!textFilled" class="input-button" @click="load">Load</button>
     </div>
@@ -44,11 +51,23 @@ export default {
     };
   },
   computed: {
-    url() {
-      return `https://ar.portfo.io/models/${this.modelName}.gltf`;
+    url: {
+      get() {
+        return `https://ar.portfo.io/models/${this.modelName}.gltf`;
+      },
+      set() {}
     },
-    urlIos() {
-      return `https://ar.portfo.io/models/${this.modelName}.usdz`;
+    urlIos: {
+      get() {
+        return `https://ar.portfo.io/models/${this.modelName}.usdz`;
+      },
+      set() {}
+    }
+  },
+  mounted() {
+    if (this.$route.query.name !== undefined) {
+      this.textFilled = true;
+      this.modelName = this.$route.query.name;
     }
   },
   methods: {
@@ -102,13 +121,13 @@ export default {
 .input-label {
   color: white;
   font-weight: bolder;
-  font-size: 4vh;
+  font-size: 2.5vh;
 }
 
 .input-text {
-  width: 50%;
+  width: 80%;
   height: 5vh;
-  font-size: 80%;
+  font-size: 20px;
   background-color: $dark-gray;
   color: white;
   padding: 5px;
@@ -118,7 +137,7 @@ export default {
 }
 
 ::placeholder {
-  color: $dark-gray;
+  color: $light-gray;
 }
 
 .input-button {

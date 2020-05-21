@@ -4,12 +4,10 @@ using Rhino;
 using Rhino.Commands;
 using Rhino.Geometry;
 using Rhino.FileIO;
-using System.Net;
-using System.Collections.Specialized;
-using System.Text;
-using Newtonsoft.Json;
+using Rhino.Input.Custom;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Rhino.UI;
 
 namespace ExportAR
 {
@@ -36,38 +34,38 @@ namespace ExportAR
 
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
+            GetObject go = new GetObject();
+            go.SetCommandPrompt("Please select the geometry you want to export to AR");
+            go.GetMultiple(0, 0);
+            
+            if (go.ObjectCount > 0)
+            {
+                string docName = doc.Name.Replace(".3dm", "");
 
-            RhinoApp.WriteLine("Please select the geometry you want to export to AR");
+                //Export
+                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AR",
+                    "Export");
+                string objPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AR",
+                    "Export", docName + ".obj");
+                string mtlPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AR",
+                    "Export", docName + ".mtl");
+                string encodedPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AR",
+                     "Export", docName + ".txt");
 
-            string docName = doc.Name.Replace(".3dm", "");
+                Directory.CreateDirectory(dir);
+                FileUtilties.DeleteFiles(dir);
+                FileObj.Write(objPath, doc, CreateObjWriteOptions());
+                //FileUtilties.ModifyMtl(mtlPath);
 
-            //Export
-            string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AR",
-                "Export");
-            string objPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AR",
-                "Export", docName + ".obj");
-            string mtlPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AR",
-                "Export", docName + ".mtl");
-            string encodedPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AR",
-                 "Export", docName + ".txt");
-
-            Directory.CreateDirectory(dir);
-            FileUtilties.DeleteFiles(dir);
-            FileObj.Write(objPath, doc, CreateObjWriteOptions());
-            FileUtilties.ModifyMtl(mtlPath);
-
-            byte[] objFile = File.ReadAllBytes(objPath);
-            byte[] mtlFile = File.ReadAllBytes(mtlPath);
-
-            string encodedObj = FileUtilties.EncodeBase64(objPath);
-            string encodedMtl = FileUtilties.EncodeBase64(mtlPath);
+                byte[] objFile = File.ReadAllBytes(objPath);
+                byte[] mtlFile = File.ReadAllBytes(mtlPath);
 
 
-            UploadToServer(objFile, mtlFile, docName);
+                UploadToServer(objFile, mtlFile, docName);
 
-            doc.Objects.UnselectAll();
+                doc.Objects.UnselectAll();
 
-            // ---
+            }
 
             return Result.Success;
         }
@@ -90,14 +88,15 @@ namespace ExportAR
             {
                 CreateNgons = false,
                 ExportMaterialDefinitions = true,
-                ExportNormals = false,
-                ExportTcs = false,
-                ExportVcs = false,
+                ExportNormals = true,
+                ExportTcs = true,
+                ExportVcs = true,
                 SignificantDigits = 4,
                 ExportGroupNameLayerNames = FileObjWriteOptions.ObjGroupNames.NoGroups,
                 UseRelativeIndexing = false,
                 MeshParameters = MeshingParameters.FastRenderMesh,
-                MapZtoY = true
+                MapZtoY = true,
+                UnderbarMaterialNames = true
             };
 
             return objWriteOptions;
@@ -117,7 +116,9 @@ namespace ExportAR
             response.EnsureSuccessStatusCode();
             httpClient.Dispose();
             string sd = response.Content.ReadAsStringAsync().Result;
-            RhinoApp.WriteLine(sd);
+            string frontendUrl = "https://ar-viewer.netlify.app/";
+            Dialogs.ShowMessage($"Please search for {sd} on {frontendUrl}", "Upload Success!");
+            RhinoApp.WriteLine($"Please search for {sd} on {frontendUrl}", "Upload Success!");
             return sd;
         }
     }

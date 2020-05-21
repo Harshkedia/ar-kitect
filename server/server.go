@@ -3,6 +3,8 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+
+	// "haikunator"
 	"io"
 	"log"
 	"net/http"
@@ -66,6 +68,7 @@ func (m *message) receiveFiles() (string, error) {
 			continue
 		}
 		m.FileNames = append(m.FileNames, part.FileName())
+		// s := haikunator.Haikunate()
 		log.Println("filename: " + part.FileName())
 		d, err := os.Create(part.FileName())
 		if err != nil {
@@ -117,8 +120,8 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 	var fname string
 	fname = t.FileNames[0]
 	// fmt.Printf("fname: %s, FileNames : %v, length: %d", fname, t.FileNames, len(t.FileNames))
-	for _, fname := range t.FileNames {
-		defer os.Remove(fname)
+	for _, fnm := range t.FileNames {
+		defer os.Remove(fnm)
 	}
 
 	if t.FileFormat == "obj" {
@@ -126,31 +129,33 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 			fname = t.FileNames[1]
 		}
 		log.Println("converting fileformat obj")
-		commandArgs = []string{"-i", fname, "-o", "./models/" + fname + ".glb"}
+		commandArgs = []string{"-i", fname, "-o", "./models/" + strings.TrimSuffix(fname, ".obj") + ".gltf"}
 		_, err = exec.Command("obj2gltf", commandArgs...).Output()
 		if err != nil {
-			// log.Fatal(err)
+
 			log.Println(err)
-			fmt.Fprintln(w, "failed to convert to glb")
+			fmt.Fprintln(w, "failed to convert to gltf")
 			return
 		}
+		fname = strings.TrimSuffix(fname, ".obj")
 	} else if t.FileFormat == "fbx" {
-
+		var msg []byte
 		log.Println("converting fileformat fbx")
-		commandArgs = []string{"--binary", "-i", fname, "-o", "./models/" + fname + ".glb"}
-		_, err = exec.Command("./FBX2glTF", commandArgs...).Output()
+		commandArgs = []string{"--embed", "-i", fname, "-o", "./models/" + strings.TrimSuffix(fname, ".fbx") + ".gltf"}
+		msg, err = exec.Command("./FBX2glTF", commandArgs...).Output()
 		if err != nil {
 			// log.Fatal(err)
-			log.Println(err)
-			fmt.Fprintln(w, "failed to convert to glb")
+			log.Println(string(msg))
+			fmt.Fprintln(w, "failed to convert to gltf")
 			return
 		}
+		fname = strings.TrimSuffix(fname, ".fbx")
 	}
 
-	log.Println("convert to glb successful")
+	log.Println("convert to gltf successful")
 
 	// convert to usdz
-	commandArgs = []string{"./models/" + fname + ".glb", "./models/" + fname + ".usdz"}
+	commandArgs = []string{"./models/" + fname + ".gltf", "./models/" + fname + ".usdz"}
 	_, err = exec.Command("usd_from_gltf", commandArgs...).Output()
 	if err != nil {
 		// log.Fatal(err)
@@ -161,7 +166,7 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 	log.Println("convert to usdz successful")
 
 	fmt.Fprintln(w, fname+".usdz")
-	go expireFiles([]string{fname + ".glb", fname + ".usdz"})
+	go expireFiles([]string{fname + ".gltf", fname + ".usdz"})
 }
 
 func headers(w http.ResponseWriter, req *http.Request) {

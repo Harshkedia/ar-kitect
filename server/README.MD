@@ -10,7 +10,5 @@ docker run --rm -d --mount type=bind,source=$(pwd)/sample-models,target=/usr/app
 
 Test the endpoint
 ```
-curl -X POST \
-  http://localhost/ \
-  -d '{"FileName" : "box", "FileData" :"base64-encoded-really-long-string"}'
+curl -X POST 'https://ar.portfo.io/?mode=fbx' -F f.obj=@'C:/Users/29545/Downloads/testrhinofbx.fbx'
 ```

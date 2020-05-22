@@ -55,7 +55,7 @@ namespace ExportAR
 
             for (int i = 0; i < mtl.Length; i++)
             {
-                //if (mtl[i].Contains("Ks") || mtl[i].Contains("Tf") || mtl[i].Contains("Ns")) mtl[i] = "";
+                if (mtl[i].Contains("Ks") || mtl[i].Contains("Tf") || mtl[i].Contains("Ns")) mtl[i] = "";
                 finalMaterialFile.Add(mtl[i]);
             }
 

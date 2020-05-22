@@ -1,3 +1,3 @@
 set GOOS=linux
-go build server.go
-docker build -t usdzserver . 
+go build
+docker build -t registry.gitlab.com/codeosol/ar-kitect . 

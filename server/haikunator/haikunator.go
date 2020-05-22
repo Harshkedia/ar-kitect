@@ -1,4 +1,4 @@
-package haikunate
+package haikunator
 
 //  source : https://github.com/yelinaung/go-haikunator
 

@@ -1,1 +1,1 @@
-docker build -t usdzserver .
+docker build -t registry.gitlab.com/codeosol/ar-kitect .

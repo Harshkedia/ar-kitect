@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	// "haikunator"
 	"io"
 	"log"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"ar-kitect/server/haikunator"
 
 	"golang.org/x/crypto/acme/autocert"
 )
@@ -49,6 +50,8 @@ func expireFiles(fnames []string) {
 }
 
 func (m *message) receiveFiles() (string, error) {
+	namegen := haikunator.New(time.Now().UTC().UnixNano())
+	randname := namegen.Haikunate()
 	m.FileNames = []string{}
 	reader, err := m.FileContent.MultipartReader()
 	if err != nil {
@@ -67,10 +70,11 @@ func (m *message) receiveFiles() (string, error) {
 		if part.FileName() == "" {
 			continue
 		}
-		m.FileNames = append(m.FileNames, part.FileName())
-		// s := haikunator.Haikunate()
-		log.Println("filename: " + part.FileName())
-		d, err := os.Create(part.FileName())
+		thisfname := randname + part.FileName()[len(part.FileName())-4:len(part.FileName())]
+		m.FileNames = append(m.FileNames, thisfname)
+
+		log.Println("filename: " + thisfname)
+		d, err := os.Create(thisfname)
 		if err != nil {
 			// log.Fatal(err)
 			return "failed to write file", err
@@ -161,11 +165,12 @@ func usdz(w http.ResponseWriter, req *http.Request) {
 		// log.Fatal(err)
 		log.Println(err)
 		fmt.Fprint(w, "failed to convert to usdz")
+		fmt.Fprint(w, fname)
 		return
 	}
 	log.Println("convert to usdz successful")
 
-	fmt.Fprintln(w, fname+".usdz")
+	fmt.Fprintln(w, fname)
 	go expireFiles([]string{fname + ".gltf", fname + ".usdz"})
 }
 

@@ -53,13 +53,13 @@ export default {
   computed: {
     url: {
       get() {
-        return `https://ar.portfo.io/models/${this.modelName}.gltf`;
+        return "https://file.io/9XPXahlL0kuV";
       },
       set() {}
     },
     urlIos: {
       get() {
-        return `https://ar.portfo.io/models/${this.modelName}.usdz`;
+        return "https://file.io/QFFNMPVRkAqg";
       },
       set() {}
     }

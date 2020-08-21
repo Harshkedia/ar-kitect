@@ -53,13 +53,13 @@ export default {
   computed: {
     url: {
       get() {
-        return "https://file.io/9XPXahlL0kuV";
+        return "https://srv-file6.gofile.io/download/ki8pTg/Intermediate.glb";
       },
       set() {}
     },
     urlIos: {
       get() {
-        return "https://file.io/QFFNMPVRkAqg";
+        return "https://srv-file18.gofile.io/download/t5CzrI/Intermediate.usdz";
       },
       set() {}
     }

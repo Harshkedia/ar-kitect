@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -13,8 +12,6 @@ import (
 	"time"
 
 	"ar-kitect/server/haikunator"
-
-	"golang.org/x/crypto/acme/autocert"
 )
 
 var (
@@ -25,9 +22,9 @@ var (
 	OBJ_TO_GLTF     = "obj2gltf"
 	FBX_TO_GLTF     = "./FBX2glTF"
 	GLTF_TO_USDZ    = "usd_from_gltf"
-	CERT_DOMAIN     = "CERT_DOMAIN"
 	APP_STATIC_PATH = "APP_STATIC_PATH"
 	MODELS_PATH     = "MODELS_PATH"
+	SERVER_PORT     = ":http"
 )
 
 type message struct {
@@ -234,7 +231,7 @@ func convertToUSDZ(w http.ResponseWriter, fname string) bool {
 }
 
 func headers(w http.ResponseWriter, req *http.Request) {
-
+	log.Printf("headers requested")
 	for name, headers := range req.Header {
 		for _, h := range headers {
 			_, _ = fmt.Fprintf(w, "%v: %v\n", name, h)
@@ -246,13 +243,12 @@ func pathsMustExist(paths ...string) {
 	for _, p := range paths {
 		abspath, _ := filepath.Abs(p)
 		if _, err := os.Stat(abspath); os.IsNotExist(err) || p == "" {
-			panic(fmt.Sprintf("path %s is not accessible", abspath))
+			panic(fmt.Sprintf("path '%s' is empty or not accessible", p))
 		}
 	}
 }
 
 func main() {
-	certDomain, ok := os.LookupEnv(CERT_DOMAIN)
 	staticPath, _ := os.LookupEnv(APP_STATIC_PATH)
 	modelsPath, _ := os.LookupEnv(MODELS_PATH)
 
@@ -277,23 +273,13 @@ func main() {
 	)
 	mainMux := newMiddleware(mux)
 	server := &http.Server{
-		Addr:    ":https",
+		Addr:    SERVER_PORT,
 		Handler: mainMux,
 	}
 
-	var certManager autocert.Manager
-	if ok && certDomain != "" {
-		certManager = autocert.Manager{
-			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(certDomain),
-			Cache:      autocert.DirCache("certs"),
-		}
-		server.TLSConfig = &tls.Config{
-			GetCertificate: certManager.GetCertificate,
-		}
-		go server.ListenAndServeTLS("", "")
-	}
-	err := http.ListenAndServe(":http", certManager.HTTPHandler(nil))
+	log.Printf("starting server on port %s", SERVER_PORT)
+
+	err := server.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
 	}

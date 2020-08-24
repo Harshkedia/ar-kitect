@@ -3,12 +3,12 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -18,14 +18,16 @@ import (
 )
 
 var (
-	OBJ          = "obj"
-	FBX          = "fbx"
-	GLTF         = "gltf"
-	USDZ         = "usdz"
-	OBJ_TO_GLTF  = "obj2gltf"
-	FBX_TO_GLTF  = "./FBX2glTF"
-	GLTF_TO_USDZ = "usd_from_gltf"
-	CERT_DOMAIN  = "CERT_DOMAIN"
+	OBJ             = "obj"
+	FBX             = "fbx"
+	GLTF            = "gltf"
+	USDZ            = "usdz"
+	OBJ_TO_GLTF     = "obj2gltf"
+	FBX_TO_GLTF     = "./FBX2glTF"
+	GLTF_TO_USDZ    = "usd_from_gltf"
+	CERT_DOMAIN     = "CERT_DOMAIN"
+	APP_STATIC_PATH = "APP_STATIC_PATH"
+	MODELS_PATH     = "MODELS_PATH"
 )
 
 type message struct {
@@ -240,40 +242,59 @@ func headers(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func pathsMustExist(paths ...string) {
+	for _, p := range paths {
+		abspath, _ := filepath.Abs(p)
+		if _, err := os.Stat(abspath); os.IsNotExist(err) || p == "" {
+			panic(fmt.Sprintf("path %s is not accessible", abspath))
+		}
+	}
+}
+
 func main() {
 	certDomain, ok := os.LookupEnv(CERT_DOMAIN)
-	// TODO: handle http also
-	if !ok && certDomain != "" {
-		log.Panicf("env variable %s not set", CERT_DOMAIN)
-	}
+	staticPath, _ := os.LookupEnv(APP_STATIC_PATH)
+	modelsPath, _ := os.LookupEnv(MODELS_PATH)
 
-	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(certDomain), //Your domain here
-		Cache:      autocert.DirCache("certs"),         //Folder for storing certificates
-	}
+	pathsMustExist(staticPath, modelsPath)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", usdzHandler)
+	mux.HandleFunc("/api", usdzHandler)
 	mux.HandleFunc("/headers", headers)
 	mux.Handle(
 		"/models/",
 		http.StripPrefix(
-			strings.TrimRight("/models/", "/"),
-			http.FileServer(http.Dir("models")),
+			strings.TrimRight(fmt.Sprintf("/models/"), "/"),
+			http.FileServer(http.Dir(modelsPath)),
+		),
+	)
+	mux.Handle(
+		"/",
+		http.StripPrefix(
+			strings.TrimRight("/", "/"),
+			http.FileServer(http.Dir(staticPath)),
 		),
 	)
 	mainMux := newMiddleware(mux)
 	server := &http.Server{
-		Addr: ":https",
-		TLSConfig: &tls.Config{
-			GetCertificate: certManager.GetCertificate,
-		},
+		Addr:    ":https",
 		Handler: mainMux,
 	}
-	go http.ListenAndServe(":http", certManager.HTTPHandler(nil))
-	err := server.ListenAndServeTLS("", "")
+
+	var certManager autocert.Manager
+	if ok && certDomain != "" {
+		certManager = autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(certDomain),
+			Cache:      autocert.DirCache("certs"),
+		}
+		server.TLSConfig = &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		}
+		go server.ListenAndServeTLS("", "")
+	}
+	err := http.ListenAndServe(":http", certManager.HTTPHandler(nil))
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		log.Fatal(err)
 	}
 }

@@ -243,7 +243,7 @@ func pathsMustExist(paths ...*string) {
 	for _, p := range paths {
 		*p, _ = filepath.Abs(*p)
 		if _, err := os.Stat(*p); os.IsNotExist(err) || *p == "" {
-			panic(fmt.Sprintf("path '%s' is empty or not accessible", p))
+			panic(fmt.Sprintf("path '%s' is empty or not accessible", *p))
 		}
 		log.Println(*p)
 	}

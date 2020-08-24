@@ -47,19 +47,19 @@ export default {
   data() {
     return {
       textFilled: false,
-      modelName: ""
+      modelName: "Intermediate"
     };
   },
   computed: {
     url: {
       get() {
-        return "https://srv-file6.gofile.io/download/ki8pTg/Intermediate.glb";
+        return `/models/${this.modelName}.gltf`;
       },
       set() {}
     },
     urlIos: {
       get() {
-        return "https://srv-file18.gofile.io/download/t5CzrI/Intermediate.usdz";
+        return `/models/${this.modelName}.usdz`;
       },
       set() {}
     }

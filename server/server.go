@@ -239,12 +239,13 @@ func headers(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func pathsMustExist(paths ...string) {
+func pathsMustExist(paths ...*string) {
 	for _, p := range paths {
-		abspath, _ := filepath.Abs(p)
-		if _, err := os.Stat(abspath); os.IsNotExist(err) || p == "" {
+		*p, _ = filepath.Abs(*p)
+		if _, err := os.Stat(*p); os.IsNotExist(err) || *p == "" {
 			panic(fmt.Sprintf("path '%s' is empty or not accessible", p))
 		}
+		log.Println(*p)
 	}
 }
 
@@ -252,7 +253,7 @@ func main() {
 	staticPath, _ := os.LookupEnv(APP_STATIC_PATH)
 	modelsPath, _ := os.LookupEnv(MODELS_PATH)
 
-	pathsMustExist(staticPath, modelsPath)
+	pathsMustExist(&staticPath, &modelsPath)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api", usdzHandler)
@@ -266,10 +267,7 @@ func main() {
 	)
 	mux.Handle(
 		"/",
-		http.StripPrefix(
-			strings.TrimRight("/", "/"),
-			http.FileServer(http.Dir(staticPath)),
-		),
+		http.FileServer(http.Dir(staticPath)),
 	)
 	mainMux := newMiddleware(mux)
 	server := &http.Server{

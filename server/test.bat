@@ -1,1 +1,1 @@
-docker run -d --rm --mount type=bind,source=%GITHUB%/ar-kitect/server/sample-models,target=/usr/app/models -p 80:80 -p 443:443 --name usd-server registry.gitlab.com/codeosol/ar-kitect
+docker run -d --rm --mount type=bind,source=%GITHUB%/ar-kitect/server/sample-models,target=/usr/app/models -p 80:80 -p 443:443 --name usd-server registry.gitlab.com/slonxode/ar-kitect

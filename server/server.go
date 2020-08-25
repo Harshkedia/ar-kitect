@@ -24,7 +24,7 @@ var (
 	GLTF_TO_USDZ    = "usd_from_gltf"
 	APP_STATIC_PATH = "APP_STATIC_PATH"
 	MODELS_PATH     = "MODELS_PATH"
-	SERVER_PORT     = ":http"
+	SERVER_PORT     = "PORT"
 )
 
 type message struct {
@@ -230,55 +230,75 @@ func convertToUSDZ(w http.ResponseWriter, fname string) bool {
 	return true
 }
 
+func main() {
+	port := fmt.Sprintf(":%s", os.Getenv(SERVER_PORT))
+	staticPath, _ := os.LookupEnv(APP_STATIC_PATH)
+	modelsPath, _ := os.LookupEnv(MODELS_PATH)
+
+	pathsMustExist(staticPath, modelsPath)
+	log.Printf("static path %s, models path %s", staticPath, modelsPath)
+
+	server := createServer(modelsPath, staticPath, port)
+
+	log.Printf("starting server on port %s", port)
+
+	err := server.ListenAndServe()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func pathsMustExist(paths ...string) {
+	for _, p := range paths {
+		abspath, _ := filepath.Abs(p)
+		if _, err := os.Stat(p); os.IsNotExist(err) || p == "" {
+			panic(fmt.Sprintf("path '%s' is empty or not accessible", abspath))
+		}
+		log.Println(p)
+	}
+}
+func createServer(modelsPath string, staticPath string, port string) *http.Server {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api", usdzHandler)
+	mux.HandleFunc("/headers", headers)
+	mux.Handle("/models/", modelsHandler(modelsPath))
+	mux.HandleFunc("/", indexHandler(staticPath))
+	mux.Handle("/js/", dirHandler(staticPath, "js"))
+	mux.Handle("/css/", dirHandler(staticPath, "css"))
+	mux.Handle("/img/", dirHandler(staticPath, "img"))
+	mainMux := newMiddleware(mux)
+	server := &http.Server{
+		Addr:    port,
+		Handler: mainMux,
+	}
+	return server
+}
+
+func indexHandler(staticPath string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, staticPath)
+	}
+}
+
+func modelsHandler(modelsPath string) http.Handler {
+	return http.StripPrefix(
+		strings.TrimRight(fmt.Sprintf("/models/"), "/"),
+		http.FileServer(http.Dir(modelsPath)),
+	)
+}
+
+func dirHandler(staticPath string, subdir string) http.Handler {
+	return http.StripPrefix(
+		strings.TrimRight(fmt.Sprintf("/%s/", subdir), "/"),
+		http.FileServer(http.Dir(filepath.Join(staticPath, subdir))),
+	)
+}
+
 func headers(w http.ResponseWriter, req *http.Request) {
 	log.Printf("headers requested")
 	for name, headers := range req.Header {
 		for _, h := range headers {
 			_, _ = fmt.Fprintf(w, "%v: %v\n", name, h)
 		}
-	}
-}
-
-func pathsMustExist(paths ...*string) {
-	for _, p := range paths {
-		*p, _ = filepath.Abs(*p)
-		if _, err := os.Stat(*p); os.IsNotExist(err) || *p == "" {
-			panic(fmt.Sprintf("path '%s' is empty or not accessible", *p))
-		}
-		log.Println(*p)
-	}
-}
-
-func main() {
-	staticPath, _ := os.LookupEnv(APP_STATIC_PATH)
-	modelsPath, _ := os.LookupEnv(MODELS_PATH)
-
-	pathsMustExist(&staticPath, &modelsPath)
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/api", usdzHandler)
-	mux.HandleFunc("/headers", headers)
-	mux.Handle(
-		"/models/",
-		http.StripPrefix(
-			strings.TrimRight(fmt.Sprintf("/models/"), "/"),
-			http.FileServer(http.Dir(modelsPath)),
-		),
-	)
-	mux.Handle(
-		"/",
-		http.FileServer(http.Dir(staticPath)),
-	)
-	mainMux := newMiddleware(mux)
-	server := &http.Server{
-		Addr:    SERVER_PORT,
-		Handler: mainMux,
-	}
-
-	log.Printf("starting server on port %s", SERVER_PORT)
-
-	err := server.ListenAndServe()
-	if err != nil {
-		log.Fatal(err)
 	}
 }

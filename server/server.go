@@ -1,31 +1,30 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
-
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"ar-kitect/server/haikunator"
-
-	"golang.org/x/crypto/acme/autocert"
 )
 
 var (
-	OBJ          = "obj"
-	FBX          = "fbx"
-	GLTF         = "gltf"
-	USDZ         = "usdz"
-	OBJ_TO_GLTF  = "obj2gltf"
-	FBX_TO_GLTF  = "./FBX2glTF"
-	GLTF_TO_USDZ = "usd_from_gltf"
-	CERT_DOMAIN  = "CERT_DOMAIN"
+	OBJ             = "obj"
+	FBX             = "fbx"
+	GLTF            = "gltf"
+	USDZ            = "usdz"
+	OBJ_TO_GLTF     = "obj2gltf"
+	FBX_TO_GLTF     = "./FBX2glTF"
+	GLTF_TO_USDZ    = "usd_from_gltf"
+	APP_STATIC_PATH = "APP_STATIC_PATH"
+	MODELS_PATH     = "MODELS_PATH"
+	SERVER_PORT     = "PORT"
 )
 
 type message struct {
@@ -231,49 +230,75 @@ func convertToUSDZ(w http.ResponseWriter, fname string) bool {
 	return true
 }
 
-func headers(w http.ResponseWriter, req *http.Request) {
+func main() {
+	port := fmt.Sprintf(":%s", os.Getenv(SERVER_PORT))
+	staticPath, _ := os.LookupEnv(APP_STATIC_PATH)
+	modelsPath, _ := os.LookupEnv(MODELS_PATH)
 
+	pathsMustExist(staticPath, modelsPath)
+	log.Printf("static path %s, models path %s", staticPath, modelsPath)
+
+	server := createServer(modelsPath, staticPath, port)
+
+	log.Printf("starting server on port %s", port)
+
+	err := server.ListenAndServe()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func pathsMustExist(paths ...string) {
+	for _, p := range paths {
+		abspath, _ := filepath.Abs(p)
+		if _, err := os.Stat(p); os.IsNotExist(err) || p == "" {
+			panic(fmt.Sprintf("path '%s' is empty or not accessible", abspath))
+		}
+		log.Println(p)
+	}
+}
+func createServer(modelsPath string, staticPath string, port string) *http.Server {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api", usdzHandler)
+	mux.HandleFunc("/headers", headers)
+	mux.Handle("/models/", modelsHandler(modelsPath))
+	mux.HandleFunc("/", indexHandler(staticPath))
+	mux.Handle("/js/", dirHandler(staticPath, "js"))
+	mux.Handle("/css/", dirHandler(staticPath, "css"))
+	mux.Handle("/img/", dirHandler(staticPath, "img"))
+	mainMux := newMiddleware(mux)
+	server := &http.Server{
+		Addr:    port,
+		Handler: mainMux,
+	}
+	return server
+}
+
+func indexHandler(staticPath string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, staticPath)
+	}
+}
+
+func modelsHandler(modelsPath string) http.Handler {
+	return http.StripPrefix(
+		strings.TrimRight(fmt.Sprintf("/models/"), "/"),
+		http.FileServer(http.Dir(modelsPath)),
+	)
+}
+
+func dirHandler(staticPath string, subdir string) http.Handler {
+	return http.StripPrefix(
+		strings.TrimRight(fmt.Sprintf("/%s/", subdir), "/"),
+		http.FileServer(http.Dir(filepath.Join(staticPath, subdir))),
+	)
+}
+
+func headers(w http.ResponseWriter, req *http.Request) {
+	log.Printf("headers requested")
 	for name, headers := range req.Header {
 		for _, h := range headers {
 			_, _ = fmt.Fprintf(w, "%v: %v\n", name, h)
 		}
-	}
-}
-
-func main() {
-	certDomain, ok := os.LookupEnv(CERT_DOMAIN)
-	// TODO: handle http also
-	if !ok && certDomain != "" {
-		log.Panicf("env variable %s not set", CERT_DOMAIN)
-	}
-
-	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(certDomain), //Your domain here
-		Cache:      autocert.DirCache("certs"),         //Folder for storing certificates
-	}
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", usdzHandler)
-	mux.HandleFunc("/headers", headers)
-	mux.Handle(
-		"/models/",
-		http.StripPrefix(
-			strings.TrimRight("/models/", "/"),
-			http.FileServer(http.Dir("models")),
-		),
-	)
-	mainMux := newMiddleware(mux)
-	server := &http.Server{
-		Addr: ":https",
-		TLSConfig: &tls.Config{
-			GetCertificate: certManager.GetCertificate,
-		},
-		Handler: mainMux,
-	}
-	go http.ListenAndServe(":http", certManager.HTTPHandler(nil))
-	err := server.ListenAndServeTLS("", "")
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
 	}
 }

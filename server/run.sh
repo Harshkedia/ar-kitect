@@ -1,1 +1,0 @@
-docker run -d --mount type=bind,source=$(pwd)/sample-models,target=/usr/app/models -p 80:80 -p 443:443 --name usd-server registry.gitlab.com/slonxode/ar-kitect
